@@ -7,22 +7,22 @@ it. The in-game UI builds a query; an out-of-process searcher does the brute-for
 
 | Path         | What                                                                 |
 |--------------|---------------------------------------------------------------------|
-| `SeedFinder/`| The Steamodded mod (Lua UI + handshake) shipped to players.          |
+| `OmenGlobe/`| The Steamodded mod (Lua UI + handshake) shipped to players.          |
 | `Immolate/`  | GPU seed searcher (C / OpenCL). Vendored as a git subtree of upstream.|
 
 ### How they talk
 
 ```
-Balatro + SeedFinder (Lua)
-   │  writes a JSON query to <LOVE save dir>/SeedFinder/
+Balatro + OmenGlobe (Lua)
+   │  writes a JSON query to <LOVE save dir>/OmenGlobe/
    ▼
-watcher.py            (started by SeedFinder/launch.sh as a Steam launch wrapper)
+watcher.py            (started by OmenGlobe/launch.sh as a Steam launch wrapper)
    │  runs the searcher
    ▼
 Immolate binary       (built from Immolate/)
    │  writes the matching seed back to the handshake dir
    ▼
-SeedFinder (Lua)      starts a run on the seed
+OmenGlobe (Lua)      starts a run on the seed
 ```
 
 ## Build the searcher
@@ -35,8 +35,8 @@ cp build/Immolate ./Immolate               # place binary beside watcher.py / la
 
 ## Install the mod
 
-Copy `SeedFinder/` into Balatro's `Mods/` directory (Steamodded required). Add the
-launch wrapper from `SeedFinder/launch.sh` to the game's Steam launch options so the
+Copy `OmenGlobe/` into Balatro's `Mods/` directory (Steamodded required). Add the
+launch wrapper from `OmenGlobe/launch.sh` to the game's Steam launch options so the
 searcher watcher runs alongside the game.
 
 ## Immolate subtree

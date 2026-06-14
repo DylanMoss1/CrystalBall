@@ -1,18 +1,18 @@
 #!/usr/bin/env bash
-# Steam launch-option wrapper: starts the SeedFinder watcher tied to the game's
+# Steam launch-option wrapper: starts the OmenGlobe watcher tied to the game's
 # lifetime, then runs the real game command (%command%). No machine-specific
 # paths -- everything is derived from this script's location and the environment
 # Steam provides, so the same launch-option line works on any install.
 #
 # Paste into Balatro -> Properties -> Launch Options:
-#   bash "${STEAM_COMPAT_DATA_PATH}/pfx/drive_c/users/steamuser/AppData/Roaming/Balatro/Mods/SeedFinder/launch.sh" %command%
+#   bash "${STEAM_COMPAT_DATA_PATH}/pfx/drive_c/users/steamuser/AppData/Roaming/Balatro/Mods/OmenGlobe/launch.sh" %command%
 #
-# The only assumptions: this mod lives at <save-dir>/Mods/SeedFinder and the
+# The only assumptions: this mod lives at <save-dir>/Mods/OmenGlobe and the
 # Immolate binary + watcher.py sit beside this script.
 set -u
 
 # Mod assets (Immolate binary + watcher.py) sit next to this script. pwd keeps
-# the logical path, so a symlinked Mods/SeedFinder still resolves correctly.
+# the logical path, so a symlinked Mods/OmenGlobe still resolves correctly.
 MOD_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 IMMOLATE="$MOD_DIR/Immolate"
 WATCHER="$MOD_DIR/watcher.py"
@@ -25,7 +25,7 @@ if [[ -n "${STEAM_COMPAT_DATA_PATH:-}" ]]; then
 else
     SAVE_DIR="${XDG_DATA_HOME:-$HOME/.local/share}/Balatro"
 fi
-HANDSHAKE_DIR="$SAVE_DIR/SeedFinder"
+HANDSHAKE_DIR="$SAVE_DIR/OmenGlobe"
 
 # Start the watcher only if both assets are present; never block the game launch.
 WPID=""
