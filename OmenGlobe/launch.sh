@@ -7,14 +7,14 @@
 # Paste into Balatro -> Properties -> Launch Options:
 #   bash "${STEAM_COMPAT_DATA_PATH}/pfx/drive_c/users/steamuser/AppData/Roaming/Balatro/Mods/OmenGlobe/launch.sh" %command%
 #
-# The only assumptions: this mod lives at <save-dir>/Mods/OmenGlobe and the
-# Immolate binary + watcher.py sit beside this script.
+# The only assumptions: this mod lives at <save-dir>/Mods/OmenGlobe, watcher.py
+# sits beside this script, and the Immolate binary is in the immolate/ subfolder.
 set -u
 
-# Mod assets (Immolate binary + watcher.py) sit next to this script. pwd keeps
-# the logical path, so a symlinked Mods/OmenGlobe still resolves correctly.
+# watcher.py sits next to this script; the Immolate binary + its .cl kernels live
+# in immolate/. pwd keeps the logical path, so a symlinked Mods/OmenGlobe resolves.
 MOD_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-IMMOLATE="$MOD_DIR/Immolate"
+IMMOLATE="$MOD_DIR/immolate/Immolate"   # binary + its .cl kernels live in immolate/
 WATCHER="$MOD_DIR/watcher.py"
 
 # Balatro's LOVE save dir holds the handshake folder the mod's Lua writes to.

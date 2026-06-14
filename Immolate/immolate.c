@@ -28,7 +28,7 @@ int main(int argc, char **argv) {
     cl_int stopOnFirst = 0;
     for (int i = 0; i < argc; i++) {
         if (strcmp(argv[i], "-h")==0) {
-            printf_s("Valid command line arguments:\n-h        Shows this help dialog.\n-f <F>    Sets the filter used by Immolate to F. Defaults to erratic_flush_five.\n-j <J>    Passes a JSON search query to a query-aware filter (e.g. find_joker). See README.\n--first   Stops the search as soon as one matching seed is found (prints exactly one).\n-q        Quiet mode: suppress all output except matching seeds (prints just <SEED>).\n-s <S>    Sets the starting seed to S. Defaults to empty seed. Use \"random\" for a random starting seed.\n-n <N>    Sets the number of seeds to search to N. Defaults to full seed pool.\n-c <C>    Sets the cutoff score for a seed to be printed to C. Defaults to 1.\n-p <P>    Sets the platform ID of the CL device being used to P. Defaults to 0.\n-d <D>    Sets the device ID of the CL device being used to D. Defaults to 0.\n-g <G>    Sets the number of thread groups to G. Defaults to 16. Increasing this might help Immolate run faster.\n\n--list_devices   Lists information about the detected CL devices.");
+            printf_s("Valid command line arguments:\n-h        Shows this help dialog.\n-f <F>    Sets the filter used by Immolate to F. Defaults to erratic_flush_five.\n-j <J>    Passes a JSON search query to a query-aware filter (e.g. find_joker). See README.\n-J <F>    Like -j, but reads the JSON query from file F (avoids shell-quoting the query).\n--first   Stops the search as soon as one matching seed is found (prints exactly one).\n-q        Quiet mode: suppress all output except matching seeds (prints just <SEED>).\n-s <S>    Sets the starting seed to S. Defaults to empty seed. Use \"random\" for a random starting seed.\n-n <N>    Sets the number of seeds to search to N. Defaults to full seed pool.\n-c <C>    Sets the cutoff score for a seed to be printed to C. Defaults to 1.\n-p <P>    Sets the platform ID of the CL device being used to P. Defaults to 0.\n-d <D>    Sets the device ID of the CL device being used to D. Defaults to 0.\n-g <G>    Sets the number of thread groups to G. Defaults to 16. Increasing this might help Immolate run faster.\n\n--list_devices   Lists information about the detected CL devices.");
             return 0;
         }
         if (strcmp(argv[i],  "-p")==0) {
@@ -41,6 +41,25 @@ int main(int argc, char **argv) {
         }
         if (strcmp(argv[i],  "-j")==0) {
             queryJson = argv[i+1];
+            i++;
+        }
+        if (strcmp(argv[i],  "-J")==0) {
+            // Read the JSON query from a file instead of argv. Lets callers that
+            // invoke Immolate through a shell (e.g. the Windows mod's io.popen)
+            // avoid escaping the query's quotes/braces on the command line.
+            FILE* qf = fopen(argv[i+1], "rb");
+            if (qf) {
+                fseek(qf, 0, SEEK_END);
+                long qn = ftell(qf);
+                fseek(qf, 0, SEEK_SET);
+                char* qbuf = malloc(qn + 1);
+                size_t rd = fread(qbuf, 1, qn, qf);
+                qbuf[rd] = '\0';
+                fclose(qf);
+                queryJson = qbuf;
+            } else {
+                printf_s("Warning: could not open query file '%s', ignoring...\n", argv[i+1]);
+            }
             i++;
         }
         if (strcmp(argv[i],  "--first")==0) {

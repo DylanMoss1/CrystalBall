@@ -132,8 +132,42 @@ end
 --------------------------------------------------------------------------------
 
 local req_counter = 0
+local FILTER = "find_joker" -- query-aware Immolate filter (matches watcher.py default)
 
--- Writes a search request for the host watcher to pick up.
+-- Windows ships no watcher: the mod runs Immolate.exe itself. io.popen needs a real
+-- OS path (not a love.filesystem virtual one) and goes through cmd.exe, so paths use
+-- backslashes and get quoted; the JSON query is passed via a file (-J) to dodge
+-- command-line quoting entirely. Returns the seed, or nil + error string.
+local function run_immolate_windows(query)
+	local save = love.filesystem.getSaveDirectory()
+	love.filesystem.write(HANDSHAKE_DIR .. "/query.json", query)
+
+	local function win(p)
+		return (p:gsub("/", "\\"))
+	end
+	local exe = win(save .. "/Mods/OmenGlobe/immolate/Immolate.exe")
+	local qfile = win(save .. "/" .. HANDSHAKE_DIR .. "/query.json")
+
+	-- cmd.exe strips the outer quotes of a quoted-program command, so the whole
+	-- line is wrapped in an extra pair (the classic `cmd /c ""prog" args"` form).
+	local cmd = string.format('""%s" -f %s --first -q -J "%s""', exe, FILTER, qfile)
+	local h = io.popen(cmd, "r")
+	if not h then
+		return nil, "could not launch Immolate.exe"
+	end
+	local out = h:read("*a") or ""
+	h:close()
+
+	local seed = out:match("%S+")
+	if not seed then
+		return nil, "no matching seed"
+	end
+	return seed
+end
+
+-- Starts a search. On Linux/Proton this writes a request file for the host watcher;
+-- on Windows it runs Immolate.exe inline (blocking) and writes the response itself,
+-- so both paths resolve through the same per-frame poller (mod.poll).
 function mod.request_seed(criteria)
 	req_counter = req_counter + 1
 	local id = string.format("%d-%d", os.time(), req_counter)
@@ -143,6 +177,12 @@ function mod.request_seed(criteria)
 	love.filesystem.remove(RESPONSE) -- drop any stale result
 	love.filesystem.write(REQUEST, id .. "\n" .. query .. "\n")
 	mod.pending = { id = id, frames = 0, started = os.time() }
+
+	if jit.os == "Windows" then
+		-- No watcher: do the watcher's job inline, then let mod.poll pick it up.
+		local seed, err = run_immolate_windows(query)
+		love.filesystem.write(RESPONSE, id .. "\n" .. (seed or ("ERROR: " .. err)) .. "\n")
+	end
 end
 
 local function toast(text, hold)
