@@ -39,7 +39,7 @@ jobs:
           cp Immolate/build/Immolate "$out/Immolate/"
           cp Immolate/search.cl "$out/Immolate/"
           cp -r Immolate/filters Immolate/lib "$out/Immolate/"
-          chmod +x "$out/Immolate/Immolate" "$out/linux/launch.sh"
+          chmod +x "$out/Immolate/Immolate" "$out/CrystalBall/linux/launch.sh"
           (cd dist && zip -r ../CrystalBall-linux-proton.zip CrystalBall)
 
       - uses: actions/upload-artifact@v4
