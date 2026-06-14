@@ -4,6 +4,9 @@ build/
 # Compiled Immolate searcher binary (built from Immolate/ source)
 Immolate/Immolate
 
+# Cached OpenCL program binaries written beside the searcher at runtime
+*.clbin
+
 # Temporary handshake directory
 CrystalBallHandshake/
 

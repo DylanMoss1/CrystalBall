@@ -16,6 +16,8 @@ int main(int argc, char **argv) {
     // Handle CLI arguments
     unsigned int platformID = 0;
     unsigned int deviceID = 0;
+    cl_int platformSet = 0; // whether -p/-d were given explicitly; if not, auto-select.
+    cl_int deviceSet = 0;
     unsigned int numGroups = 16;
     cl_char8 startingSeed;
     for (int i = 0; i < 8; i++) {
@@ -33,6 +35,7 @@ int main(int argc, char **argv) {
         }
         if (strcmp(argv[i],  "-p")==0) {
             platformID = atoi(argv[i+1]);
+            platformSet = 1;
             i++;
         }
         if (strcmp(argv[i],  "-f")==0) {
@@ -67,6 +70,7 @@ int main(int argc, char **argv) {
         }
         if (strcmp(argv[i],  "-d")==0) {
             deviceID = atoi(argv[i+1]);
+            deviceSet = 1;
             i++;
         }
         if (strcmp(argv[i],  "-g")==0) {
@@ -207,7 +211,17 @@ int main(int argc, char **argv) {
 
     // Set up platform and device based on CLI args
 
-    
+    // No explicit -p/-d? Auto-select the best device (real GPU over CPU/software
+    // layers like Windows' OpenCLOn12), so users need not know their device IDs.
+    if (!platformSet && !deviceSet) {
+        unsigned int bestPlatform, bestDevice;
+        if (pickBestDevice(&bestPlatform, &bestDevice)) {
+            platformID = bestPlatform;
+            deviceID = bestDevice;
+            if (!quiet) printf_s("Auto-selected platform %u, device %u\n", platformID, deviceID);
+        }
+    }
+
     // Get # of OpenCL Platforms
     cl_uint numPlatforms;
     err = clGetPlatformIDs(0, NULL, &numPlatforms);
@@ -257,30 +271,9 @@ int main(int argc, char **argv) {
     cl_command_queue queue = clCreateCommandQueue(ctx, device, 0, &err);
     clErrCheck(err, "clCreateCommandQueue - Creating OpenCL command queue");
 
-    // Create a program from kernel source
-    cl_program ssKernelProgram = clCreateProgramWithSource(ctx, 1, (const char**)&ssKernelCode, (const size_t*)&ssKernelSize, &err);
-    clErrCheck(err, "clCreateProgramWithSource - Creating OpenCL program");
-
-    // Build the program
-    if (!quiet) printf_s("Building program...\n");
-    err = clBuildProgram(ssKernelProgram, 1, &device, include_path, NULL, NULL);
-    if (err == CL_BUILD_PROGRAM_FAILURE) { //print build log on error
-        size_t logLength = 0;
-        err = clGetProgramBuildInfo(ssKernelProgram, device, CL_PROGRAM_BUILD_LOG, 0, NULL, &logLength);
-        if (err != CL_SUCCESS) {
-            printf_s("Error getting build log length: %d\n", err);
-            return EXIT_FAILURE;
-        }
-        char *buf = calloc(logLength, sizeof(char));
-        err = clGetProgramBuildInfo(ssKernelProgram, device, CL_PROGRAM_BUILD_LOG, logLength, buf, NULL);
-        if (err != CL_SUCCESS) {
-            printf_s("Error getting build log: %d\n", err);
-            return EXIT_FAILURE;
-        }
-        printf_s("%s", buf);
-        printf_s("\n");
-    }
-    clErrCheck(err, "clBuildProgram - Building OpenCL program");
+    // Create + build the program, served from the on-disk binary cache when the
+    // source, includes, device and driver all match (see buildProgramCached).
+    cl_program ssKernelProgram = buildProgramCached(ctx, device, ssKernelCode, ssKernelSize, include_path, executable_dir, quiet);
 
     // Create OpenCL kernel
     cl_kernel ssKernel = clCreateKernel(ssKernelProgram, "search", &err);

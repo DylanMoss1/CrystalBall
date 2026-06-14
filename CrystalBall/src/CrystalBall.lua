@@ -148,40 +148,56 @@ local function is_native_windows()
 	return not save:find("/users/steamuser/", 1, true)
 end
 
--- Windows ships no watcher: the mod runs Immolate.exe itself. io.popen needs a real
--- OS path (not a love.filesystem virtual one) and goes through cmd.exe, so paths use
--- backslashes and get quoted; the JSON query is passed via a file (-J) to dodge
--- command-line quoting entirely. Returns the seed, or nil + error string.
-local function run_immolate_windows(query)
-	local save = love.filesystem.getSaveDirectory()
-	love.filesystem.write(HANDSHAKE_DIR .. "/query.json", query)
+-- Windows ships no watcher: the mod launches Immolate.exe itself. The launch must
+-- be *detached* -- a blocking io.popen would freeze the game thread (and so the
+-- waiting overlay) for the whole search. Instead a generated .bat runs the searcher,
+-- redirects its seed to WIN_OUT, then writes WIN_DONE as a completion marker; mod.poll
+-- watches for WIN_DONE (so the game keeps rendering meanwhile, exactly like the Linux
+-- watcher path). All files live under HANDSHAKE_DIR (inside the love save dir), so they
+-- are reachable both as OS paths (for cmd) and love.filesystem virtual paths (for poll).
+local WIN_OUT = HANDSHAKE_DIR .. "/winout.txt"
+local WIN_DONE = HANDSHAKE_DIR .. "/windone.txt"
+local WIN_BAT = HANDSHAKE_DIR .. "/run.bat"
 
+-- Launches Immolate.exe detached. Returns true on launch, or false + error string.
+local function run_immolate_windows(query)
+	love.filesystem.write(HANDSHAKE_DIR .. "/query.json", query)
+	love.filesystem.remove(WIN_OUT) -- drop any stale output/marker from a prior run
+	love.filesystem.remove(WIN_DONE)
+
+	local save = love.filesystem.getSaveDirectory()
 	local function win(p)
 		return (p:gsub("/", "\\"))
 	end
 	local exe = win(save .. "/Mods/CrystalBall/Immolate/Immolate.exe")
 	local qfile = win(save .. "/" .. HANDSHAKE_DIR .. "/query.json")
+	local out = win(save .. "/" .. WIN_OUT)
+	local done = win(save .. "/" .. WIN_DONE)
+	local bat = win(save .. "/" .. WIN_BAT)
 
-	-- cmd.exe strips the outer quotes of a quoted-program command, so the whole
-	-- line is wrapped in an extra pair (the classic `cmd /c ""prog" args"` form).
-	local cmd = string.format('""%s" -f %s --first -q -J "%s""', exe, FILTER, qfile)
-	local h = io.popen(cmd, "r")
-	if not h then
-		return nil, "could not launch Immolate.exe"
-	end
-	local out = h:read("*a") or ""
-	h:close()
+	-- Keep all the quoting in a .bat file (avoids the nested `cmd /c ""prog" args""`
+	-- escaping). The done marker is written only after Immolate exits, so its presence
+	-- means "finished" -- WIN_OUT may legitimately be empty (no matching seed).
+	love.filesystem.write(
+		WIN_BAT,
+		"@echo off\r\n"
+			.. string.format('"%s" -f %s --first -q -J "%s" > "%s"\r\n', exe, FILTER, qfile, out)
+			.. string.format('echo done> "%s"\r\n', done)
+	)
 
-	local seed = out:match("%S+")
-	if not seed then
-		return nil, "no matching seed"
+	-- `start "" /b` detaches the .bat: cmd returns immediately, so the game never blocks.
+	-- os.execute (LuaJIT/5.1) returns the shell status; nil/false means it failed to spawn.
+	local ok = os.execute(string.format('start "" /b "%s"', bat))
+	if ok == nil or ok == false then
+		return false, "could not launch Immolate.exe"
 	end
-	return seed
+	return true
 end
 
 -- Starts a search. On Linux/Proton this writes a request file for the host watcher;
--- on Windows it runs Immolate.exe inline (blocking) and writes the response itself,
--- so both paths resolve through the same per-frame poller (mod.poll).
+-- on native Windows it launches Immolate.exe detached (no watcher). Either way the
+-- result is resolved asynchronously through the same per-frame poller (mod.poll), so
+-- the game keeps rendering the waiting overlay while the search runs.
 function mod.request_seed(criteria)
 	req_counter = req_counter + 1
 	local id = string.format("%d-%d", os.time(), req_counter)
@@ -193,9 +209,15 @@ function mod.request_seed(criteria)
 	mod.pending = { id = id, frames = 0, started = os.time() }
 
 	if is_native_windows() then
-		-- No watcher: do the watcher's job inline, then let mod.poll pick it up.
-		local seed, err = run_immolate_windows(query)
-		love.filesystem.write(RESPONSE, id .. "\n" .. (seed or ("ERROR: " .. err)) .. "\n")
+		-- No watcher: launch Immolate detached and let mod.poll translate its output
+		-- into a RESPONSE once the done marker appears (keeps the overlay animating).
+		local ok, err = run_immolate_windows(query)
+		if not ok then
+			love.filesystem.write(RESPONSE, id .. "\n" .. ("ERROR: " .. err) .. "\n")
+		else
+			mod.pending.win_out = WIN_OUT
+			mod.pending.win_done = WIN_DONE
+		end
 	end
 end
 
@@ -296,10 +318,19 @@ function mod.poll()
 		return
 	end
 
+	-- Native-Windows inline path: once Immolate's done marker appears, translate its
+	-- output file into a RESPONSE so the shared handling below resolves it. The marker
+	-- means the search finished; an empty WIN_OUT means no matching seed.
+	if p.win_done and love.filesystem.read(p.win_done) then
+		local out = love.filesystem.read(p.win_out) or ""
+		local seed = out:match("%S+")
+		love.filesystem.write(RESPONSE, p.id .. "\n" .. (seed or "ERROR: no matching seed") .. "\n")
+		love.filesystem.remove(p.win_out)
+		love.filesystem.remove(p.win_done)
+		p.win_done = nil
+	end
+
 	local data = love.filesystem.read(RESPONSE)
-	print("==================")
-	print(data)
-	print("==================")
 	if data then
 		local rid, payload = data:match("^(%S+)%s*\n(.-)%s*$")
 		if rid == p.id then
