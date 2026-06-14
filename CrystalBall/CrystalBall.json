@@ -1,11 +1,11 @@
 {
-    "id": "OmenGlobe",
-    "name": "Omen Globe",
-    "display_name": "Omen Globe",
+    "id": "CrystalBall",
+    "name": "Crystal Ball",
+    "display_name": "Crystal Ball",
     "author": ["Dylan"],
     "description": "Finds a seed matching structured criteria using the Immolate seed searcher, then starts a run on it.",
-    "prefix": "omenglobe",
-    "main_file": "src/OmenGlobe.lua",
+    "prefix": "crystalball",
+    "main_file": "src/CrystalBall.lua",
     "priority": 0,
     "version": "0.1.0",
     "dependencies": ["Steamodded (>=1.0.0~BETA-0400a)"]

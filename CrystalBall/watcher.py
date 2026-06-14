@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Omen Globe watcher - bridges the Balatro mod to the Immolate searcher.
+"""Crystal Ball watcher - bridges the Balatro mod to the Immolate searcher.
 
 Polls <dir>/request.txt for a new request id, runs Immolate with the query, and
 writes <dir>/response.txt. Runs on the host OS (Linux or Windows).
@@ -11,7 +11,7 @@ Handshake files (line-based, no JSON parsing needed here):
 Example (Proton/Linux):
     python3 watcher.py \\
       --immolate ../Immolate/Immolate \\
-      --dir "$HOME/.local/share/Steam/steamapps/compatdata/2379780/pfx/drive_c/users/steamuser/AppData/Roaming/Balatro/OmenGlobeBackendCommunication"
+      --dir "$HOME/.local/share/Steam/steamapps/compatdata/2379780/pfx/drive_c/users/steamuser/AppData/Roaming/Balatro/CrystalBallBackendCommunication"
 """
 
 import argparse
@@ -34,9 +34,9 @@ def run_immolate(binary, filt, query, timeout):
 
 
 def main():
-    ap = argparse.ArgumentParser(description="Omen Globe <-> Immolate bridge")
+    ap = argparse.ArgumentParser(description="Crystal Ball <-> Immolate bridge")
     ap.add_argument(
-        "--dir", required=True, help="OmenGlobe handshake dir (in the LOVE save dir)"
+        "--dir", required=True, help="CrystalBall handshake dir (in the LOVE save dir)"
     )
     ap.add_argument("--immolate", required=True, help="path to the Immolate binary")
     ap.add_argument("--filter", default="find_joker")
@@ -52,7 +52,7 @@ def main():
     os.remove(resp_path)
 
     last_id = None
-    print(f"[OmenGlobe] watching {req_path}\n[OmenGlobe] immolate: {args.immolate}")
+    print(f"[CrystalBall] watching {req_path}\n[CrystalBall] immolate: {args.immolate}")
 
     while True:
         try:
@@ -80,7 +80,7 @@ def main():
         with open(tmp, "w", encoding="utf-8") as f:
             f.write(f"{rid}\n{payload}\n")
         os.replace(tmp, resp_path)
-        print(f"[OmenGlobe] {rid} -> {payload}")
+        print(f"[CrystalBall] {rid} -> {payload}")
         time.sleep(args.interval)
 
 

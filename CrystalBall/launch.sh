@@ -1,18 +1,18 @@
 #!/usr/bin/env bash
-# Steam launch-option wrapper: starts the OmenGlobe watcher tied to the game's
+# Steam launch-option wrapper: starts the CrystalBall watcher tied to the game's
 # lifetime, then runs the real game command (%command%). No machine-specific
 # paths -- everything is derived from this script's location and the environment
 # Steam provides, so the same launch-option line works on any install.
 #
 # Paste into Balatro -> Properties -> Launch Options:
-#   bash "${STEAM_COMPAT_DATA_PATH}/pfx/drive_c/users/steamuser/AppData/Roaming/Balatro/Mods/OmenGlobe/launch.sh" %command%
+#   bash "${STEAM_COMPAT_DATA_PATH}/pfx/drive_c/users/steamuser/AppData/Roaming/Balatro/Mods/CrystalBall/launch.sh" %command%
 #
-# The only assumptions: this mod lives at <save-dir>/Mods/OmenGlobe, watcher.py
+# The only assumptions: this mod lives at <save-dir>/Mods/CrystalBall, watcher.py
 # sits beside this script, and the Immolate binary is in the immolate/ subfolder.
 set -u
 
 # watcher.py sits next to this script; the Immolate binary + its .cl kernels live
-# in immolate/. pwd keeps the logical path, so a symlinked Mods/OmenGlobe resolves.
+# in immolate/. pwd keeps the logical path, so a symlinked Mods/CrystalBall resolves.
 MOD_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 IMMOLATE="$MOD_DIR/immolate/Immolate"   # binary + its .cl kernels live in immolate/
 WATCHER="$MOD_DIR/watcher.py"
@@ -25,7 +25,7 @@ if [[ -n "${STEAM_COMPAT_DATA_PATH:-}" ]]; then
 else
     SAVE_DIR="${XDG_DATA_HOME:-$HOME/.local/share}/Balatro"
 fi
-HANDSHAKE_DIR="$SAVE_DIR/OmenGlobeBackendCommunication"
+HANDSHAKE_DIR="$SAVE_DIR/CrystalBallBackendCommunication"
 
 # Start the watcher only if both assets are present; never block the game launch.
 WPID=""

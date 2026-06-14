@@ -1,4 +1,4 @@
-# Omen Globe (template)
+# Crystal Ball (template)
 
 A Steamodded mod that finds a Balatro seed matching structured criteria using the
 [Immolate](../Immolate) searcher, then starts a run on it.
@@ -7,9 +7,9 @@ The mod can't run Immolate itself portably (under Proton the game is a Windows
 process), so it does a **file handshake** with an external `watcher.py` on the host:
 
 ```
-mod   --writes-->  <savedir>/OmenGlobeBackendCommunication/request.txt    id + query JSON
+mod   --writes-->  <savedir>/CrystalBallBackendCommunication/request.txt    id + query JSON
 watcher           runs Immolate, --writes--> response.txt   id + seed
-mod   <--polls--   <savedir>/OmenGlobeBackendCommunication/response.txt    then Game:start_run
+mod   <--polls--   <savedir>/CrystalBallBackendCommunication/response.txt    then Game:start_run
 ```
 
 Identical on Linux and Windows — only the watcher's paths differ.
@@ -19,8 +19,8 @@ Identical on Linux and Windows — only the watcher's paths differ.
 Symlink (or copy) this folder into the Balatro `Mods` directory:
 
 ```sh
-ln -sfn "$PWD/OmenGlobe" \
-  "$HOME/.local/share/Steam/steamapps/compatdata/2379780/pfx/drive_c/users/steamuser/AppData/Roaming/Balatro/Mods/OmenGlobe"
+ln -sfn "$PWD/CrystalBall" \
+  "$HOME/.local/share/Steam/steamapps/compatdata/2379780/pfx/drive_c/users/steamuser/AppData/Roaming/Balatro/Mods/CrystalBall"
 ```
 
 Requires Steamodded + Lovely (already in your `Mods/`).
@@ -41,7 +41,7 @@ game can't reach it). Rather than starting it by hand, let Steam launch it with
 the game. Balatro → **Properties → General → Launch Options**:
 
 ```
-bash "${STEAM_COMPAT_DATA_PATH}/pfx/drive_c/users/steamuser/AppData/Roaming/Balatro/Mods/OmenGlobe/launch.sh" %command%
+bash "${STEAM_COMPAT_DATA_PATH}/pfx/drive_c/users/steamuser/AppData/Roaming/Balatro/Mods/CrystalBall/launch.sh" %command%
 ```
 
 `launch.sh` self-locates its assets and derives the save dir from
@@ -52,36 +52,36 @@ the watcher, runs the game, and kills the watcher on exit.
 <details><summary>Manual / non-Steam invocation</summary>
 
 If you don't launch via Steam, run the watcher yourself. Point `--dir` at the
-`OmenGlobeBackendCommunication` folder inside the LÖVE **save directory**:
+`CrystalBallBackendCommunication` folder inside the LÖVE **save directory**:
 
 | Host | Save dir |
 |------|----------|
-| Steam + Proton | `…/steamapps/compatdata/2379780/pfx/drive_c/users/steamuser/AppData/Roaming/Balatro/OmenGlobeBackendCommunication` |
-| Native Linux | `~/.local/share/Balatro/OmenGlobeBackendCommunication` |
-| Native Windows | `%APPDATA%\Balatro\OmenGlobeBackendCommunication` |
+| Steam + Proton | `…/steamapps/compatdata/2379780/pfx/drive_c/users/steamuser/AppData/Roaming/Balatro/CrystalBallBackendCommunication` |
+| Native Linux | `~/.local/share/Balatro/CrystalBallBackendCommunication` |
+| Native Windows | `%APPDATA%\Balatro\CrystalBallBackendCommunication` |
 
 The exact path is logged once at mod load — search the Balatro/Lovely log for
-`[OmenGlobe] handshake dir:`.
+`[CrystalBall] handshake dir:`.
 
 ```sh
 python3 watcher.py --immolate ./Immolate \
-  --dir "$HOME/.local/share/Steam/steamapps/compatdata/2379780/pfx/drive_c/users/steamuser/AppData/Roaming/Balatro/OmenGlobeBackendCommunication"
+  --dir "$HOME/.local/share/Steam/steamapps/compatdata/2379780/pfx/drive_c/users/steamuser/AppData/Roaming/Balatro/CrystalBallBackendCommunication"
 ```
 
 ```powershell
-python watcher.py --immolate .\Immolate.exe --dir "$env:APPDATA\Balatro\OmenGlobeBackendCommunication"
+python watcher.py --immolate .\Immolate.exe --dir "$env:APPDATA\Balatro\CrystalBallBackendCommunication"
 ```
 </details>
 
 ## 4. Use it
 
 Just **start a new run** (blank seed). The mod intercepts it, runs the search,
-and starts the run on the found seed. The **Mods → Omen Globe → Config** button
+and starts the run on the found seed. The **Mods → Crystal Ball → Config** button
 still works as a manual trigger.
 
 ## Configure what to search for
 
-Edit `mod.criteria` in `OmenGlobe.lua` (hardcoded for now; in-game editing is the
+Edit `mod.criteria` in `CrystalBall.lua` (hardcoded for now; in-game editing is the
 end goal). Fixed 3-level schema:
 
 | Level | Key | Meaning |
@@ -96,8 +96,8 @@ Item names use the enum identifier form (underscores), e.g. `Gros_Michel`, `Mr_B
 
 ## Files
 
-- `OmenGlobe.json` — Steamodded metadata header.
-- `OmenGlobe.lua` — criteria → JSON, file handshake + frame poll, new-run interception.
+- `CrystalBall.json` — Steamodded metadata header.
+- `CrystalBall.lua` — criteria → JSON, file handshake + frame poll, new-run interception.
 - `watcher.py` — host-side bridge; cross-platform.
 - `launch.sh` — Steam launch-option wrapper; auto-starts/stops the watcher with the game.
 

@@ -7,22 +7,22 @@ it. The in-game UI builds a query; an out-of-process searcher does the brute-for
 
 | Path         | What                                                                 |
 |--------------|---------------------------------------------------------------------|
-| `OmenGlobe/`| The Steamodded mod (Lua UI + handshake) shipped to players.          |
+| `CrystalBall/`| The Steamodded mod (Lua UI + handshake) shipped to players.          |
 | `Immolate/`  | GPU seed searcher (C / OpenCL). Vendored as a git subtree of upstream.|
 
 ### How they talk
 
 ```
-Balatro + OmenGlobe (Lua)
-   │  writes a JSON query to <LOVE save dir>/OmenGlobeBackendCommunication/
+Balatro + CrystalBall (Lua)
+   │  writes a JSON query to <LOVE save dir>/CrystalBallBackendCommunication/
    ▼
-watcher.py            (started by OmenGlobe/launch.sh as a Steam launch wrapper)
+watcher.py            (started by CrystalBall/launch.sh as a Steam launch wrapper)
    │  runs the searcher
    ▼
 Immolate binary       (built from Immolate/)
    │  writes the matching seed back to the handshake dir
    ▼
-OmenGlobe (Lua)      starts a run on the seed
+CrystalBall (Lua)      starts a run on the seed
 ```
 
 ## Build the searcher
@@ -40,8 +40,8 @@ two bundles when a `v*` tag is pushed. Both need an OpenCL runtime (any GPU driv
 
 | Bundle | Contents | How the search runs |
 |--------|----------|---------------------|
-| `OmenGlobe-windows.zip` | mod + `immolate/Immolate.exe` | mod runs the binary directly (no watcher) |
-| `OmenGlobe-linux-proton.zip` | mod + `immolate/Immolate` + `watcher.py` + `launch.sh` | host watcher runs the binary, file handshake |
+| `CrystalBall-windows.zip` | mod + `immolate/Immolate.exe` | mod runs the binary directly (no watcher) |
+| `CrystalBall-linux-proton.zip` | mod + `immolate/Immolate` + `watcher.py` + `launch.sh` | host watcher runs the binary, file handshake |
 
 Cutting a release:
 
@@ -51,11 +51,11 @@ git tag v0.1.0 && git push origin v0.1.0
 
 ## Install the mod
 
-**Windows** — unzip `OmenGlobe-windows.zip` into Balatro's `Mods/` directory
+**Windows** — unzip `CrystalBall-windows.zip` into Balatro's `Mods/` directory
 (Steamodded required). That's it; the mod execs `immolate/Immolate.exe` itself.
 
-**Linux/Proton** — unzip `OmenGlobe-linux-proton.zip` into `Mods/`, then add the
-launch wrapper from `OmenGlobe/launch.sh` to the game's Steam launch options so the
+**Linux/Proton** — unzip `CrystalBall-linux-proton.zip` into `Mods/`, then add the
+launch wrapper from `CrystalBall/launch.sh` to the game's Steam launch options so the
 watcher runs alongside the game (the game can't exec the host binary under Proton).
 
 ## Immolate subtree

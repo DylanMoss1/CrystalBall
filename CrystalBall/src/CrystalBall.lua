@@ -1,13 +1,13 @@
---- Omen Globe
+--- Crystal Ball
 --- Finds a seed matching structured criteria, then starts a run on it.
 ---
 --- The mod never executes Immolate itself (impossible to do portably from inside
 --- the game, especially under Proton). Instead it does a file handshake with an
 --- external `watcher.py` running on the host OS:
 ---
----   mod  -> writes  <savedir>/OmenGlobeBackendCommunication/request.txt   (id + query JSON)
+---   mod  -> writes  <savedir>/CrystalBallBackendCommunication/request.txt   (id + query JSON)
 ---   host watcher    runs Immolate, writes response.txt (id + seed)
----   mod  <- polls   <savedir>/OmenGlobeBackendCommunication/response.txt   then Game:start_run
+---   mod  <- polls   <savedir>/CrystalBallBackendCommunication/response.txt   then Game:start_run
 ---
 --- This is identical on Linux and Windows; only the watcher's paths differ.
 
@@ -26,7 +26,7 @@ mod.config.stake = mod.config.stake or 1
 mod.config.timeout = mod.config.timeout or 60 -- seconds to wait for the watcher
 mod.config.poll_frames = mod.config.poll_frames or 15
 
-local HANDSHAKE_DIR = "OmenGlobeBackendCommunication"
+local HANDSHAKE_DIR = "CrystalBallBackendCommunication"
 local REQUEST = HANDSHAKE_DIR .. "/request.txt"
 local RESPONSE = HANDSHAKE_DIR .. "/response.txt"
 
@@ -145,7 +145,7 @@ local function run_immolate_windows(query)
 	local function win(p)
 		return (p:gsub("/", "\\"))
 	end
-	local exe = win(save .. "/Mods/OmenGlobe/immolate/Immolate.exe")
+	local exe = win(save .. "/Mods/CrystalBall/immolate/Immolate.exe")
 	local qfile = win(save .. "/" .. HANDSHAKE_DIR .. "/query.json")
 
 	-- cmd.exe strips the outer quotes of a quoted-program command, so the whole
@@ -226,7 +226,7 @@ local function show_waiting_overlay()
 					nodes = {
 						UIBox_button({
 							label = { "Cancel" },
-							button = "omenglobe_cancel",
+							button = "crystalball_cancel",
 							colour = G.C.RED,
 							minw = 3,
 							minh = 0.7,
@@ -240,7 +240,7 @@ local function show_waiting_overlay()
 end
 
 -- Cancel button: abandon the in-flight search and return to the main menu.
-G.FUNCS.omenglobe_cancel = function(_)
+G.FUNCS.crystalball_cancel = function(_)
 	mod.pending = nil
 	mod.deferred = nil
 	mod.resolving = false
@@ -374,15 +374,15 @@ end
 
 -- Replace the in-card sell/use UI with our own button. Card:highlight builds this
 -- UIBox whenever a Joker-set card is highlighted, so flagging the card is enough:
---   omenglobe_sel  -> red "Remove" (selection line), omenglobe_grid -> green
+--   crystalball_sel  -> red "Remove" (selection line), crystalball_grid -> green
 --   "Add" (grid). Every other card defers to the original (real run jokers, etc).
 local _orig_use_and_sell = G.UIDEF.use_and_sell_buttons
 function G.UIDEF.use_and_sell_buttons(card)
-	if card and card.omenglobe_sel then
-		return action_button(card, "Remove", G.C.RED, "omenglobe_remove_card")
+	if card and card.crystalball_sel then
+		return action_button(card, "Remove", G.C.RED, "crystalball_remove_card")
 	end
-	if card and card.omenglobe_grid then
-		return action_button(card, "Add", G.C.GREEN, "omenglobe_add_card")
+	if card and card.crystalball_grid then
+		return action_button(card, "Add", G.C.GREEN, "crystalball_add_card")
 	end
 	return _orig_use_and_sell(card)
 end
@@ -393,7 +393,7 @@ end
 -- left half show their panel to the right ('cr'), right-half cards to the left ('cl').
 local _orig_align_h_popup = Card.align_h_popup
 function Card:align_h_popup()
-	if self.omenglobe_grid or self.omenglobe_sel then
+	if self.crystalball_grid or self.crystalball_sel then
 		local cfg = _orig_align_h_popup(self)
 		local card_cx = self.T.x + self.T.w / 2
 		local room_cx = G.ROOM.T.x + G.ROOM.T.w / 2
@@ -412,7 +412,7 @@ end
 local _orig_card_highlight = Card.highlight
 function Card:highlight(is_highlighted)
 	_orig_card_highlight(self, is_highlighted)
-	if is_highlighted and self.omenglobe_grid and self.children.use_button then
+	if is_highlighted and self.crystalball_grid and self.children.use_button then
 		self.children.use_button.config.offset.y = 0.58
 	end
 end
@@ -449,7 +449,7 @@ local function make_sel_card(center, x, y, interactive, scale)
 		bypass_discovery_ui = true,
 	})
 	if interactive then
-		card.omenglobe_sel = true
+		card.crystalball_sel = true
 		card.states.click.can = true
 		card.click = function(self)
 			toggle_highlight(self, mod, "_sel_highlighted")
@@ -476,7 +476,7 @@ function mod.add_joker(center, x, y)
 end
 
 -- Remove button (on the highlighted selection card): drop it from the selection.
-G.FUNCS.omenglobe_remove_card = function(e)
+G.FUNCS.crystalball_remove_card = function(e)
 	local card = e and e.config and e.config.ref_table
 	if not card then
 		return
@@ -502,7 +502,7 @@ end
 -- Add button (on the highlighted grid card): add it to the selection. Spawns the
 -- new selection card from the grid card's position, then drops the highlight so
 -- the Add button disappears.
-G.FUNCS.omenglobe_add_card = function(e)
+G.FUNCS.crystalball_add_card = function(e)
 	local card = e and e.config and e.config.ref_table
 	if not card then
 		return
@@ -536,7 +536,7 @@ local function dismiss_if_outside(field, tgt)
 	mod[field] = nil
 end
 
-G.FUNCS.omenglobe_dismiss_outside = function(_)
+G.FUNCS.crystalball_dismiss_outside = function(_)
 	local C = G.CONTROLLER
 	local down = C.is_cursor_down
 	if down and not mod._was_cursor_down then
@@ -590,7 +590,7 @@ local function populate_joker_page(page)
 		card.sticker = get_joker_win_sticker(center)
 		-- Collection cards aren't highlightable by default, so make them a click
 		-- target and drive highlight manually to surface the Add button.
-		card.omenglobe_grid = true
+		card.crystalball_grid = true
 		card.states.click.can = true
 		card.click = function(self)
 			toggle_highlight(self, mod, "_grid_highlighted")
@@ -601,7 +601,7 @@ local function populate_joker_page(page)
 end
 
 -- Paging callback for the picker's option cycle.
-G.FUNCS.omenglobe_joker_page = function(args)
+G.FUNCS.crystalball_joker_page = function(args)
 	if not args or not args.cycle_config then
 		return
 	end
@@ -610,7 +610,7 @@ end
 
 -- Commit the working selection into the clause being edited, then return to the
 -- filter editor. A clause left empty (e.g. a freshly-added row) is dropped.
-G.FUNCS.omenglobe_picker_back = function(_)
+G.FUNCS.crystalball_picker_back = function(_)
 	local idx = mod._editing_clause
 	local cl = idx and mod.config.clauses[idx]
 	if cl then
@@ -679,7 +679,7 @@ function mod.show_joker_picker(idx)
 	mod.picker_keys = {}
 	mod._sel_highlighted = nil
 	mod._grid_highlighted = nil
-	mod._was_cursor_down = false -- edge tracker for omenglobe_dismiss_outside
+	mod._was_cursor_down = false -- edge tracker for crystalball_dismiss_outside
 	local cl = idx and mod.config.clauses[idx]
 	for i, k in ipairs(cl and cl.jokers or {}) do
 		mod.picker_keys[i] = k
@@ -722,7 +722,7 @@ function mod.show_joker_picker(idx)
 
 	G.FUNCS.overlay_menu({
 		definition = create_UIBox_generic_options({
-			back_func = "omenglobe_picker_back",
+			back_func = "crystalball_picker_back",
 			contents = {
 				{
 					n = G.UIT.R,
@@ -733,7 +733,7 @@ function mod.show_joker_picker(idx)
 						colour = G.C.BLACK,
 						emboss = 0.05,
 						-- Per-frame watcher: clears a surfaced Add/Remove button on a click away.
-						func = "omenglobe_dismiss_outside",
+						func = "crystalball_dismiss_outside",
 					},
 					nodes = { deck_table },
 				},
@@ -746,7 +746,7 @@ function mod.show_joker_picker(idx)
 							w = 2.9,
 							scale = 0.74,
 							cycle_shoulders = true,
-							opt_callback = "omenglobe_joker_page",
+							opt_callback = "crystalball_joker_page",
 							current_option = 1,
 							colour = G.C.RED,
 							no_pips = true,
@@ -832,7 +832,7 @@ local function ui_button(text, colour, button_fn, ref, disabled)
 end
 
 -- Whether the move (kind,delta) would violate a bound, given the clause's current
--- values. Recomputed live (see omenglobe_arrow_vis) so the arrow greys without a
+-- values. Recomputed live (see crystalball_arrow_vis) so the arrow greys without a
 -- full overlay rebuild.
 local function arrow_disabled(cl, kind, delta)
 	local njokers = math.max(1, #cl.jokers)
@@ -848,8 +848,8 @@ local function arrow_disabled(cl, kind, delta)
 	end
 end
 
--- A single < or > stepper arrow. The button stays live always (omenglobe_step
--- clamps, so a press at a bound is a harmless no-op); omenglobe_arrow_vis greys it
+-- A single < or > stepper arrow. The button stays live always (crystalball_step
+-- clamps, so a press at a bound is a harmless no-op); crystalball_arrow_vis greys it
 -- in place each frame when the bound is hit, avoiding a whole-overlay rebuild.
 local function step_arrow(glyph, cl, kind, delta, disp)
 	local dis = arrow_disabled(cl, kind, delta)
@@ -865,8 +865,8 @@ local function step_arrow(glyph, cl, kind, delta, disp)
 			shadow = true,
 			colour = dis and G.C.UI.BACKGROUND_INACTIVE or G.C.RED,
 			one_press = true,
-			button = "omenglobe_step",
-			func = "omenglobe_arrow_vis",
+			button = "crystalball_step",
+			func = "crystalball_arrow_vis",
 			ref_table = { cl = cl, kind = kind, delta = delta, disp = disp },
 		},
 		nodes = {
@@ -885,7 +885,7 @@ end
 
 -- A labelled [< value >] stepper. C node so it flows horizontally beside siblings.
 -- `disp` is a per-row display table; the value text live-binds to disp[kind] (ui.lua
--- update_text re-renders when it changes) so omenglobe_step can update one field in
+-- update_text re-renders when it changes) so crystalball_step can update one field in
 -- place rather than rebuilding the whole editor overlay.
 local function stepper(label, cl, kind, disp)
 	return {
@@ -942,7 +942,7 @@ local function build_clause_row(cl, idx)
 	-- "Num matches" reads ">=N", or "All" when it equals the joker count.
 	-- "\226\137\165" is the UTF-8 for the >= glyph (U+2265).
 	local num_text = (atL >= #cl.jokers and has) and "All" or ("\226\137\165" .. atL)
-	-- Live display strings, keyed by stepper `kind`; omenglobe_step mutates these so
+	-- Live display strings, keyed by stepper `kind`; crystalball_step mutates these so
 	-- the value text updates without rebuilding the overlay.
 	local disp = { minante = tostring(minA), maxante = tostring(maxA), numjokers = num_text }
 	local line_node = has and { n = G.UIT.O, config = { object = build_joker_line(cl.jokers, false, PREVIEW_SCALE) } }
@@ -976,8 +976,8 @@ local function build_clause_row(cl, idx)
 						n = G.UIT.R,
 						config = { align = "cm", padding = 0.03 },
 						nodes = {
-							ui_button("Edit", G.C.BLUE, "omenglobe_edit_clause", { idx = idx }),
-							ui_button("Delete", G.C.RED, "omenglobe_delete_clause", { idx = idx }),
+							ui_button("Edit", G.C.BLUE, "crystalball_edit_clause", { idx = idx }),
+							ui_button("Delete", G.C.RED, "crystalball_delete_clause", { idx = idx }),
 						},
 					},
 				},
@@ -1019,7 +1019,7 @@ function mod.show_filter_editor(instant)
 					options = pages,
 					current_option = mod._editor_page,
 					cycle_shoulders = true,
-					opt_callback = "omenglobe_editor_page",
+					opt_callback = "crystalball_editor_page",
 					w = 2.5,
 					scale = 0.7,
 					no_pips = true,
@@ -1039,7 +1039,7 @@ function mod.show_filter_editor(instant)
 	contents[#contents + 1] = {
 		n = G.UIT.R,
 		config = { align = "cm", padding = 0.03 },
-		nodes = { ui_button("+ Add row", G.C.GREEN, "omenglobe_add_clause", nil) },
+		nodes = { ui_button("+ Add row", G.C.GREEN, "crystalball_add_clause", nil) },
 	}
 	G.FUNCS.overlay_menu({
 		definition = create_UIBox_generic_options({ back_func = "exit_overlay_menu", contents = contents }),
@@ -1051,7 +1051,7 @@ end
 -- re-render (so the arrows re-grey at the new extremes). The disabled-arrow guard in
 -- build_clause_row already blocks moves that would violate min<=max; the clamp here
 -- is belt-and-braces.
-G.FUNCS.omenglobe_step = function(e)
+G.FUNCS.crystalball_step = function(e)
 	local r = e and e.config and e.config.ref_table
 	local cl = r and r.cl
 	if not cl then
@@ -1076,13 +1076,13 @@ G.FUNCS.omenglobe_step = function(e)
 	end
 	save_config()
 	-- No overlay rebuild: the value text live-binds to `disp` and the arrows grey via
-	-- omenglobe_arrow_vis, so the page-cycle widget no longer re-pops on each press.
+	-- crystalball_arrow_vis, so the page-cycle widget no longer re-pops on each press.
 end
 
 -- Per-frame visual refresh for a stepper arrow: greys it (and its glyph) when the
 -- move would breach a bound. Runs each frame because the node carries a `button`
--- (ui.lua:463). The button stays live; omenglobe_step clamps, so a bound press no-ops.
-G.FUNCS.omenglobe_arrow_vis = function(e)
+-- (ui.lua:463). The button stays live; crystalball_step clamps, so a bound press no-ops.
+G.FUNCS.crystalball_arrow_vis = function(e)
 	local r = e.config.ref_table
 	if not (r and r.cl) then
 		return
@@ -1096,7 +1096,7 @@ G.FUNCS.omenglobe_arrow_vis = function(e)
 end
 
 -- Flick to another editor section (page).
-G.FUNCS.omenglobe_editor_page = function(args)
+G.FUNCS.crystalball_editor_page = function(args)
 	if not args or not args.cycle_config then
 		return
 	end
@@ -1105,7 +1105,7 @@ G.FUNCS.omenglobe_editor_page = function(args)
 end
 
 -- Edit a clause's jokers (opens the picker; returns here on back).
-G.FUNCS.omenglobe_edit_clause = function(e)
+G.FUNCS.crystalball_edit_clause = function(e)
 	local idx = e and e.config and e.config.ref_table and e.config.ref_table.idx
 	if idx then
 		mod.show_joker_picker(idx)
@@ -1113,7 +1113,7 @@ G.FUNCS.omenglobe_edit_clause = function(e)
 end
 
 -- Delete a clause row.
-G.FUNCS.omenglobe_delete_clause = function(e)
+G.FUNCS.crystalball_delete_clause = function(e)
 	local idx = e and e.config and e.config.ref_table and e.config.ref_table.idx
 	if idx then
 		table.remove(mod.config.clauses, idx)
@@ -1124,13 +1124,13 @@ end
 
 -- Add a new (empty) clause and immediately pick its jokers. Jump to the section
 -- holding the new row so it is in view when we come back from the picker.
-G.FUNCS.omenglobe_add_clause = function(_)
+G.FUNCS.crystalball_add_clause = function(_)
 	mod.config.clauses[#mod.config.clauses + 1] = new_clause()
 	mod._editor_page = math.ceil(#mod.config.clauses / ROWS_PER_PAGE)
 	mod.show_joker_picker(#mod.config.clauses)
 end
 
--- Mod config tab (Mods > Omen Globe > Config): a button into the filter editor.
+-- Mod config tab (Mods > Crystal Ball > Config): a button into the filter editor.
 function mod.config_tab()
 	return {
 		n = G.UIT.ROOT,
@@ -1156,7 +1156,7 @@ function mod.config_tab()
 				nodes = {
 					UIBox_button({
 						label = { "Edit seed filter" },
-						button = "omenglobe_open_editor",
+						button = "crystalball_open_editor",
 						colour = G.C.BLUE,
 						minw = 4,
 						minh = 0.8,
@@ -1168,7 +1168,7 @@ function mod.config_tab()
 	}
 end
 
-G.FUNCS.omenglobe_open_editor = function(_)
+G.FUNCS.crystalball_open_editor = function(_)
 	mod._editor_page = 1
 	mod.show_filter_editor()
 end
@@ -1223,4 +1223,4 @@ G.FUNCS.start_run = function(e, args)
 end
 
 -- One-time hint: where the watcher should point its --dir.
-sendInfoMessage("handshake dir: " .. love.filesystem.getSaveDirectory() .. "/" .. HANDSHAKE_DIR, "OmenGlobe")
+sendInfoMessage("handshake dir: " .. love.filesystem.getSaveDirectory() .. "/" .. HANDSHAKE_DIR, "CrystalBall")
