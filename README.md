@@ -33,11 +33,30 @@ cmake -B build && cmake --build build      # requires a system OpenCL
 cp build/Immolate ./Immolate               # place binary beside watcher.py / launch.sh
 ```
 
+## Releases
+
+CI (`.github/workflows/release.yml`) builds the searcher on both OSes and publishes
+two bundles when a `v*` tag is pushed. Both need an OpenCL runtime (any GPU driver):
+
+| Bundle | Contents | How the search runs |
+|--------|----------|---------------------|
+| `OmenGlobe-windows.zip` | mod + `immolate/Immolate.exe` | mod runs the binary directly (no watcher) |
+| `OmenGlobe-linux-proton.zip` | mod + `immolate/Immolate` + `watcher.py` + `launch.sh` | host watcher runs the binary, file handshake |
+
+Cutting a release:
+
+```sh
+git tag v0.1.0 && git push origin v0.1.0
+```
+
 ## Install the mod
 
-Copy `OmenGlobe/` into Balatro's `Mods/` directory (Steamodded required). Add the
+**Windows** — unzip `OmenGlobe-windows.zip` into Balatro's `Mods/` directory
+(Steamodded required). That's it; the mod execs `immolate/Immolate.exe` itself.
+
+**Linux/Proton** — unzip `OmenGlobe-linux-proton.zip` into `Mods/`, then add the
 launch wrapper from `OmenGlobe/launch.sh` to the game's Steam launch options so the
-searcher watcher runs alongside the game.
+watcher runs alongside the game (the game can't exec the host binary under Proton).
 
 ## Immolate subtree
 

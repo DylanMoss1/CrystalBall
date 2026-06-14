@@ -1,0 +1,96 @@
+name: Release
+
+# Builds the Immolate searcher for Linux and Windows and packages two mod bundles:
+#   - OmenGlobe-windows.zip       drop-in: mod + immolate/Immolate.exe (no watcher)
+#   - OmenGlobe-linux-proton.zip  mod + immolate/Immolate + watcher.py + launch.sh
+# Pushing a tag like v0.1.0 publishes them as a GitHub Release; manual runs just
+# upload the bundles as workflow artifacts.
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+
+jobs:
+  linux:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install OpenCL (ICD loader + headers)
+        run: sudo apt-get update && sudo apt-get install -y ocl-icd-opencl-dev opencl-headers
+
+      - name: Build Immolate
+        run: |
+          cmake -S Immolate -B Immolate/build -DCMAKE_BUILD_TYPE=Release
+          cmake --build Immolate/build --config Release
+
+      - name: Assemble Linux/Proton bundle
+        run: |
+          set -eux
+          out=dist/OmenGlobe
+          mkdir -p "$out/immolate"
+          # Mod files (Lua UI + handshake) and the Linux/Proton runtime glue.
+          cp OmenGlobe/OmenGlobe.json OmenGlobe/README.md OmenGlobe/watcher.py OmenGlobe/launch.sh "$out/"
+          cp -r OmenGlobe/src "$out/"
+          # Searcher: binary + the .cl kernels it loads relative to its own dir.
+          cp Immolate/build/Immolate "$out/immolate/"
+          cp Immolate/search.cl "$out/immolate/"
+          cp -r Immolate/filters Immolate/lib "$out/immolate/"
+          chmod +x "$out/immolate/Immolate" "$out/launch.sh"
+          (cd dist && zip -r ../OmenGlobe-linux-proton.zip OmenGlobe)
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: OmenGlobe-linux-proton
+          path: OmenGlobe-linux-proton.zip
+
+  windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install OpenCL (vcpkg)
+        run: vcpkg install opencl:x64-windows
+
+      - name: Build Immolate.exe
+        run: |
+          cmake -S Immolate -B Immolate/build `
+            -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_INSTALLATION_ROOT/scripts/buildsystems/vcpkg.cmake" `
+            -DVCPKG_TARGET_TRIPLET=x64-windows
+          cmake --build Immolate/build --config Release
+
+      - name: Assemble Windows bundle
+        shell: pwsh
+        run: |
+          $out = "dist/OmenGlobe"
+          New-Item -ItemType Directory -Force -Path "$out/immolate" | Out-Null
+          # Mod files only - no watcher.py, no launch.sh (drop-in).
+          Copy-Item OmenGlobe/OmenGlobe.json, OmenGlobe/README.md "$out/"
+          Copy-Item -Recurse OmenGlobe/src "$out/"
+          # Searcher: binary + the .cl kernels it loads relative to its own dir.
+          Copy-Item Immolate/build/Release/Immolate.exe "$out/immolate/"
+          Copy-Item Immolate/search.cl "$out/immolate/"
+          Copy-Item -Recurse Immolate/filters, Immolate/lib "$out/immolate/"
+          Compress-Archive -Path "$out" -DestinationPath OmenGlobe-windows.zip
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: OmenGlobe-windows
+          path: OmenGlobe-windows.zip
+
+  release:
+    needs: [linux, windows]
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/')
+    permissions:
+      contents: write # create the release + upload assets
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: dist
+      - name: Publish GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/**/*.zip
+          generate_release_notes: true
