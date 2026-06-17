@@ -1,75 +1,49 @@
-# seed-filter
+# Crystal Ball
 
-A Balatro mod that finds a seed matching structured criteria, then starts a run on
-it. The in-game UI builds a query; an out-of-process searcher does the brute-force.
+A Balatro seed searcher mod using the [Immolate](https://github.com/SpectralPack/Immolate) backend.
 
-## Layout
+This mod is still in beta, expect issues and bugs!
 
-| Path         | What                                                                 |
-|--------------|---------------------------------------------------------------------|
-| `CrystalBall/`| The Steamodded mod (Lua UI + handshake) shipped to players.          |
-| `Immolate/`  | GPU seed searcher (C / OpenCL). Vendored as a git subtree of upstream.|
+<video src="assets/example_video.mp4" />
 
-### How they talk
+## Install
+
+### Windows
+
+1. Install Lovely and smods (see the [Balatro Modding Guide](https://steamcommunity.com/sharedfiles/filedetails/?id=3400691352)).
+2. Download the latest release.
+3. Extract the zip file into its own folder inside your Balatro mods folder (`%appdata%\Balatro\Mods`).
+
+### Linux (Proton)
+
+1. Install Lovely and smods (see the [Linux Balatro Modding Guide](https://gist.github.com/pjobson/b33bd7798271e07d6a4aec9120056395)).
+2. Download the latest release.
+3. Extract the zip file into its own folder inside your Balatro mods folder (`~/.local/share/Steam/steamapps/compatdata/2379780/pfx/drive_c/users/steamuser/AppData/Roaming/Balatro/Mods`).
+4. Set the Steam Balatro launch options (`Balatro → Properties → Launch Options`) to:
 
 ```
-Balatro + CrystalBall (Lua)
-   │  writes a JSON query to <LOVE save dir>/Mods/CrystalBall/CrystalBallHandshake/
-   ▼
-watcher.py            (started by CrystalBall/linux/launch.sh as a Steam launch wrapper)
-   │  runs the searcher
-   ▼
-Immolate binary       (built from Immolate/)
-   │  writes the matching seed back to the handshake dir
-   ▼
-CrystalBall (Lua)      starts a run on the seed
+bash "${STEAM_COMPAT_DATA_PATH}/pfx/drive_c/users/steamuser/AppData/Roaming/Balatro/Mods/CrystalBall/CrystalBall/linux/launch.sh" %command%
 ```
 
-## Build the searcher
+## Usage
 
-```sh
-cd Immolate
-cmake -B build && cmake --build build      # requires a system OpenCL
-cp build/Immolate ./Immolate               # place binary beside watcher.py / launch.sh
-```
+> [!WARNING]
+> The first time you search for a seed it will take a long time (and may crash / timeout). This is expected while the search searcher compiles, all subsequent runs will be _much_ faster.
 
-## Releases
+See the video above for an example of how to use the mod.
 
-CI (`.github/workflows/release.yml`) builds the searcher on both OSes and publishes
-two bundles when a `v*` tag is pushed. Both need an OpenCL runtime (any GPU driver):
+Non-legendary jokers can be found in shop (either as buyable jokers or in buffoon packs). The number of re-rolls per ante = `(ante - 1)`.
 
-| Bundle | Contents | How the search runs |
-|--------|----------|---------------------|
-| `CrystalBall-windows.zip` | mod + `Immolate/Immolate.exe` | mod runs the binary directly (no watcher) |
-| `CrystalBall-linux-proton.zip` | mod + `Immolate/Immolate` + `watcher.py` + `launch.sh` | host watcher runs the binary, file handshake |
+Legendary jokers can be found in shop arcana / spectral packs.
 
-Cutting a release:
+This mod does not search for packs obtained from tags.
 
-```sh
-git tag v0.1.0 && git push origin v0.1.0
-```
+## Future Work
 
-## Install the mod
+Currently this mod only supports jokers, but there are future plans to support vouchers and other cards.
 
-**Windows** — unzip `CrystalBall-windows.zip` into Balatro's `Mods/` directory
-(Steamodded required). That's it; the mod execs `Immolate/Immolate.exe` itself.
+There are plans to add custom configuration options (such as number of re-rolls per ante, and adjustable search timeouts).
 
-**Linux/Proton** — unzip `CrystalBall-linux-proton.zip` into `Mods/`, then add the
-launch wrapper from `CrystalBall/linux/launch.sh` to the game's Steam launch options
-so the watcher runs alongside the game (the game can't exec the host binary under
-Proton).
+## Thanks
 
-## Immolate subtree
-
-`Immolate/` tracks [SpectralPack/Immolate] via `git subtree` (base `26f41ef`), with
-local extensions on top (structured query parsing, item-name table, `find_joker`
-filter).
-
-```sh
-# pull upstream changes in
-git subtree pull --prefix=Immolate immolate-upstream main --squash
-# contribute our changes back (to a fork you control)
-git subtree push --prefix=Immolate <your-fork-remote> <branch>
-```
-
-[SpectralPack/Immolate]: https://github.com/SpectralPack/Immolate
+Thank you to the team behind [Immolate](https://github.com/SpectralPack/Immolate) for making this mod possible!

@@ -1,5 +1,5 @@
 #include "lib/immolate.h"
-#include "query_parse.h"
+#include "crystal_ball/query_parse.h"
 #include <time.h>
 int main(int argc, char **argv) {
     

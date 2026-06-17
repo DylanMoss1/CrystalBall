@@ -23,7 +23,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
-#include "lib/item_names.h"
+#include "item_names.h"
 
 typedef struct { int* data; int len; int cap; } qvec;
 
@@ -82,8 +82,6 @@ static void q_item(qparser* p, qvec* v) {
 }
 
 // clause := { "atLeast": N, "minAnte": X, "maxAnte": Y, "of": [ "<name>", ... ] }
-// The ante window applies to the whole clause: at least N of the listed items
-// must appear within [minAnte, maxAnte].
 static void q_clause(qparser* p, qvec* v) {
     char key[64];
     int N = 0, lo = 0, hi = 0;

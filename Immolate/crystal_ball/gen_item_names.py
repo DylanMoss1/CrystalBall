@@ -1,20 +1,20 @@
 #!/usr/bin/env python3
-"""Generate lib/item_names.h: a host-side `item_from_name` lookup.
+"""Generate crystal_ball/item_names.h: a host-side `item_from_name` lookup.
 
-The device `Item` enum (lib/items.cl) is purely sequential, so the host can
-reproduce each member's integer value by counting declaration order. We assert
-no explicit `= value` exists, since that would break the index alignment.
+The device `Item` enum (../lib/items.cl, upstream) is purely sequential, so the
+host can reproduce each member's integer value by counting declaration order. We
+assert no explicit `= value` exists, since that would break the index alignment.
 
-Usage: python3 gen_item_names.py  (run from repo root)
-Out:   lib/item_names.h
+Usage: python3 crystal_ball/gen_item_names.py
+Out:   crystal_ball/item_names.h
 """
 import re
 import sys
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parent
-SRC = ROOT / "lib" / "items.cl"
-OUT = ROOT / "lib" / "item_names.h"
+HERE = Path(__file__).resolve().parent  # Immolate/crystal_ball
+SRC = HERE.parent / "lib" / "items.cl"  # upstream enum stays in Immolate/lib
+OUT = HERE / "item_names.h"
 
 
 def extract_enum_members(text: str) -> list[str]:

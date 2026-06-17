@@ -33,8 +33,10 @@ jobs:
           out=dist/CrystalBall
           mkdir -p "$out/Immolate"
           # Mod files (Lua UI + handshake) and the Linux/Proton runtime glue.
+          # assets/<res>x/ holds the mod badge icon, resolved by SMODS relative to
+          # the mod root (where CrystalBall.json sits) -- must ship beside it.
           cp CrystalBall.json README.md "$out/"
-          cp -r CrystalBall "$out/CrystalBall"
+          cp -r CrystalBall assets "$out/"
           # Searcher: binary + the .cl kernels it loads relative to its own dir.
           cp Immolate/build/Immolate "$out/Immolate/"
           cp Immolate/search.cl "$out/Immolate/"
@@ -67,9 +69,12 @@ jobs:
         run: |
           $out = "dist/CrystalBall"
           New-Item -ItemType Directory -Force -Path "$out/Immolate" | Out-Null
-          # Mod files only - no watcher.py, no launch.sh (drop-in).
+          # Mod files only - no watcher.py, no launch.sh (drop-in). assets/<res>x/
+          # holds the mod badge icon, resolved by SMODS relative to the mod root
+          # (where CrystalBall.json sits) -- must ship beside it.
           Copy-Item CrystalBall.json, README.md "$out/"
           Copy-Item -Recurse CrystalBall "$out/CrystalBall"
+          Copy-Item -Recurse assets "$out/assets"
           # Searcher: binary + the .cl kernels it loads relative to its own dir.
           Copy-Item Immolate/build/Release/Immolate.exe "$out/Immolate/"
           Copy-Item Immolate/search.cl "$out/Immolate/"
