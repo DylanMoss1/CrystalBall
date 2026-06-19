@@ -33,10 +33,8 @@ bash "${STEAM_COMPAT_DATA_PATH}/pfx/drive_c/users/steamuser/AppData/Roaming/Bala
 
 **Non-legendary Jokers:** 
 - Found in shop & buffoon packs.
-- Number of re-rolls scales per ante
-  - Ante 1 ⇒ 0 re-rolls
-  - Ante 2 ⇒ 1 re-roll
-  - etc.
+- Number of re-rolls scales per ante:
+  - Ante 1 ⇒ 0 re-rolls, Ante 2 ⇒ 1 re-roll, etc.
 
 **Legendary Jokers:**
 - Found in arcana & spectral packs.

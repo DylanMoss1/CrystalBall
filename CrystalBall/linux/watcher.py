@@ -21,8 +21,8 @@ import time
 
 
 def run_immolate(binary, filt, query, timeout):
-    """returns: (seed, None) on success, or (None, error_message)."""  # VN7V
-    cmd = [binary, "-f", filt, "--first", "-q", "-s", "76HYV000", "-j", query]
+    """returns: (seed, None) on success, or (None, error_message)."""
+    cmd = [binary, "-f", filt, "--first", "-q", "-s", "random", "-j", query]
     try:
         proc = subprocess.run(cmd, capture_output=True, text=True, timeout=timeout)
     except Exception as e:  # noqa: BLE001 - report any spawn/timeout failure verbatim
