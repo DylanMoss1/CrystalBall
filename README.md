@@ -4,7 +4,7 @@ A Balatro seed searcher mod using the [Immolate](https://github.com/SpectralPack
 
 This mod is still in beta, expect issues and bugs!
 
-<video src="assets/example_video.mp4" />
+https://github.com/user-attachments/assets/7027d0c5-a9bc-4c73-bbf7-b06c00de24ad
 
 ## Install
 
