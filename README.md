@@ -28,8 +28,8 @@ bash "${STEAM_COMPAT_DATA_PATH}/pfx/drive_c/users/steamuser/AppData/Roaming/Bala
 ## Usage
 
 > [!WARNING]
-> The first seed search will take a long time (and may crash / timeout).
-> This is expected while the search searcher compiles, subsequent runs will be _much_ faster.
+> The first time the mod is ran, it will take a long time to find a seed. If the search timeout is exceeded YOU MUST EXIT AND REOPEN BALATRO.
+> After the first search, subsequent runs will be _much_ faster.
 
 **Non-legendary Jokers:** 
 - Found in shop & buffoon packs.
