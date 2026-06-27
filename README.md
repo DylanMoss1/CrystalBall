@@ -35,11 +35,10 @@ bash "${STEAM_COMPAT_DATA_PATH}/pfx/drive_c/users/steamuser/AppData/Roaming/Bala
 2. Add a new filter with `Add row`
 3. Configure the filter:
     - **Min/max ante:** Select the min/max ante the jokers will appear (inclusive)
-    - **Num matches:** Select the _minimum_ number of jokers that must be matched (or `All` to select all jokers)
-5. Start a new game as normal
-    - Expect the first seed search to take a long time
+    - **Num matches:** Select the _minimum_ number of jokers to find (or `All` to find all jokers)
+4. Start a new game as normal
 
-### Where Can Jokers Be Found?
+## Where Can Jokers Be Found?
 
 **Non-legendary Jokers:**
 - Found in shop & buffoon packs
@@ -49,18 +48,17 @@ bash "${STEAM_COMPAT_DATA_PATH}/pfx/drive_c/users/steamuser/AppData/Roaming/Bala
 **Legendary Jokers:**
 - Found in arcana & spectral shop packs
 
-This mod does **not** search for jokers from another other source, including packs / jokers found via skip tags.
+This mod does **not** search for jokers from another other source, including skip tag packs / free jokers.
 
 ## Future Plans
 
 - Search for vouchers / spectral cards / playing cards
 - Customisation options (custom re-rolls per ante, search timeouts, etc.)
 - Support for Showman / duplicate jokers
-- Support for Cavendish
 - Prevent jokers from appearing in the same pack
 - Prevent the selection of locked jokers
 - Option to fix the order in which jokers appear
-- Option to define/select multiple filter sets
+- Option to create/select multiple filter sets
 
 ## Thanks
 
